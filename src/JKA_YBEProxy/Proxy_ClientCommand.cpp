@@ -8,6 +8,13 @@ Proxy_ClientCommand_NetStatus
 Display net settings of all players
 ==================
 */
+static int lastNetStatusCheck = 0;
+G_RUN_FRAME;
+if (level.time - lastNetStatusCheck > 8000) {
+ //loop thru clients and dropp any wit illegal settings here
+Proxy_TimeNudgePacketCheck(clientNum);
+}
+
 void Proxy_ClientCommand_NetStatus(int clientNum)
 {
 	if (proxy.clientData[clientNum].lastTimeNetStatus + 500 > server.svs->time)
@@ -66,7 +73,7 @@ void Proxy_ClientCommand_NetStatus(int clientNum)
 
 		// No need for truncation "feature" if we move name to end
 		Q_strcat(status, sizeof(status), va("%5i %s %6i %3i %7i %9i %5i %2i %s^7\n", ps->persistant[PERS_SCORE], state, cl->rate, fps, packets, proxy.clientData[getClientNumFromAddr(cl)].timenudge, snaps, i, cl->name));
-		Proxy_KickIfNudgeAbove(clientNum);
+		Proxy_TimeNudgePacketCheck(clientNum);
 	}
 
 	proxy.clientData[clientNum].lastTimeNetStatus = server.svs->time;
@@ -128,6 +135,7 @@ static float calcRatio(int kill, int death)
 
 // WIP
 void Proxy_TimenudgePacketCheck(int clientNum) {
+	
 	if (cl->ping >= 1 && cl ->ping < 9999 && cl->state == CS_CONNECTED) {
    	int fps = 0;
    	int packets = 0;
@@ -135,8 +143,10 @@ void Proxy_TimenudgePacketCheck(int clientNum) {
 	}
 	else if (packets <= 1) {
 	}
-	else if (proxy.clientData(i).timenudge <= -10 || packets < 40 || packets > 102) {
+	else if (proxy.clientData(i).timenudge <= -10 || packets > 102 && packets != 0 && cl->ping >= 1 && cl->ping <= 200) {
   		proxy.trap->DropClient(i, S_COLOR_YELLOW"you were kicked for using illegal network settings. Check your timenudge/maxpackets! (ESL Anti-Cheat)");
+	}
+	else {
 	}
 }
 
